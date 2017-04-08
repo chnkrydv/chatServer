@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+
+    <!-- JQuery -->
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+
+    <!-- Compiled and minified CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.1/css/materialize.min.css">
+
+    <!-- Compiled and minified JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.1/js/materialize.min.js"></script>
+
+
+</head>
+
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col s3"></div>
+            <div class="col s6">
+                <div class="card light-green darken-3">
+                    <div class="card-content white-text">
+                        <div>
+                            <input id="username" type="text" />
+                        </div>
+                        <div id="messages"></div>
+                        <div>
+                            <textarea id="textarea" rows="1" cols="50"></textarea>
+                        </div>
+                        <p id="status"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col s3"></div>
+        </div>
+    </div>
+
+    <script src="http://127.0.0.1:8080/socket.io/socket.io.js"></script>
+
+    <script>
+        (function() {
+            var getNode = function(s) {
+                return document.querySelector(s);
+            };
+
+            var username = getNode('#username');
+            var messages = getNode('#messages');
+            var textarea = getNode('#textarea');
+
+            try {
+                var socket = io.connect('http://127.0.0.1:8080');
+            } catch (err) {
+                console.log(err);
+            }
+
+            if (socket !== undefined) {
+                //listen data from server
+                socket.on('output', function(data) {
+                    messages.innerText = data;
+                });
+
+                //listen data from browser and emit to server
+                textarea.addEventListener('keydown', function(event) {
+                    if (event.which === 13 && event.shiftKey === false) {
+                        if (username.value !== "" && textarea.value !== "") {
+                            socket.emit('input', {
+                                name: username.value,
+                                message: textarea.value
+                            });
+                            console.log('message sent to server');
+                        } else {
+                            console.log('username or message is empty');
+                        }
+
+                        textarea.value = null;
+                    }
+                });
+            }
+        })();
+    </script>
+</body>
+
+</html>
