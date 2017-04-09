@@ -14,6 +14,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.98.1/js/materialize.min.js"></script>
 
 
+
 </head>
 
 <body>
@@ -21,15 +22,18 @@
         <div class="row">
             <div class="col s3"></div>
             <div class="col s6">
-                <div class="card light-green darken-3">
+                <div class="card light-green darken-2">
                     <div class="card-content white-text">
                         <div>
-                            <input id="username" type="text" />
+                            <input id="username" type="text" placeholder="Enter you name" />
                         </div>
-                        <div id="messages"></div>
-                        <div>
-                            <textarea id="textarea" rows="1" cols="50"></textarea>
+                        <div id="messages" style="min-height: 250px; max-height: 250px; overflow-y: scroll;"></div>
+                        <div style="margin: 30px 0 0 0;">
+                            <textarea id="textarea" rows="1" cols="50" style="border: 1px solid white;" placeholder="Type message to send"></textarea>
                         </div>
+                        <br>
+                        <!--<button id="send" class="waves-effect waves-light btn-floating light-green darken-5">send</button>
+                        -->
                         <p id="status"></p>
                     </div>
                 </div>
@@ -42,42 +46,96 @@
 
     <script>
         (function() {
+            try {
+                var socket = io.connect('http://127.0.0.2:8080');
+            } catch (err) {
+                console.log(err);
+            }
+
             var getNode = function(s) {
                 return document.querySelector(s);
-            };
+            }
 
             var username = getNode('#username');
             var messages = getNode('#messages');
             var textarea = getNode('#textarea');
+            //var sendBtn = getNode('#send');
 
-            try {
-                var socket = io.connect('http://127.0.0.1:8080');
-            } catch (err) {
-                console.log(err);
+            function setCookie(cname, cvalue, exdays) {
+                var d = new Date();
+                d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+                var expires = "expires=" + d.toUTCString();
+                document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+            }
+
+            function getCookie(cname) {
+                var name = cname + "=";
+                var decodedCookie = decodeURIComponent(document.cookie);
+                var ca = decodedCookie.split(';');
+                for (var i = 0; i < ca.length; i++) {
+                    var c = ca[i];
+                    while (c.charAt(0) == ' ') {
+                        c = c.substring(1);
+                    }
+                    if (c.indexOf(name) == 0) {
+                        return c.substring(name.length, c.length);
+                    }
+                }
+                return "";
+            }
+
+            if (getCookie('username') !== "") {
+                username.value = getCookie('username');
+                console.log('cookie fetched');
+            }
+
+            function sendMsg() {
+                if (username.value !== "" && textarea.value !== "") {
+                    socket.emit('input', {
+                        name: username.value,
+                        message: textarea.value
+                    });
+                    console.log('message sent to server');
+                } else {
+                    console.log('username or message is empty');
+                }
+
+                if (getCookie('username') === "" || getCookie('username') !== username.value) {
+                    setCookie('username', username.value, 20);
+                    console.log('cookie created');
+                }
+
+                textarea.value = null;
             }
 
             if (socket !== undefined) {
                 //listen data from server
                 socket.on('output', function(data) {
-                    messages.innerText = data;
+                    if (data.length) {
+                        for (i = 0; i < data.length; i++) {
+                            //console.log(typeof data[i].name);
+                            var message = document.createElement('DIV');
+                            message.setAttribute('class', 'chat-message');
+                            message.textContent = data[i].name + ": " + data[i].message;
+
+                            messages.appendChild(message);
+                            messages.scrollTop = messages.scrollHeight;
+                        }
+                    }
                 });
 
                 //listen data from browser and emit to server
                 textarea.addEventListener('keydown', function(event) {
-                    if (event.which === 13 && event.shiftKey === false) {
-                        if (username.value !== "" && textarea.value !== "") {
-                            socket.emit('input', {
-                                name: username.value,
-                                message: textarea.value
-                            });
-                            console.log('message sent to server');
-                        } else {
-                            console.log('username or message is empty');
-                        }
-
-                        textarea.value = null;
+                    if (event.key === 'Enter' && event.shiftKey === false) {
+                        sendMsg();
                     }
                 });
+
+
+                // sendBtn.addEventListener('click', function(event) {
+                //     console.log(event);
+                //     sendMsg();
+                // });
             }
         })();
     </script>
