@@ -1,7 +1,6 @@
 var http = require('http');
 var fs = require('fs');
 var mongo = require('mongodb').MongoClient;
-var client = require('socket.io').listen(8080).sockets;
 
 function onRequest(req, res) {
     res.writeHead('200', { 'Content-Type': 'text/html' });
@@ -18,9 +17,11 @@ function onRequest(req, res) {
     });
 }
 
-http.createServer(onRequest).listen(8888);
+server = http.createServer(onRequest);
+server.listen(8888);
+var client = require('socket.io').listen(server).sockets;
 
-mongo.connect('mongodb://127.0.0.2/chat', function(err, db) {
+mongo.connect('mongodb://localhost:27017/chat', function(err, db) {
     if (err) throw err;
     client.on('connection', function(socket) {
         console.log('someone connected');
@@ -45,5 +46,5 @@ mongo.connect('mongodb://127.0.0.2/chat', function(err, db) {
             socket.emit('output', res);
         });
 
-    })
+    });
 });

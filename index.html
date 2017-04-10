@@ -42,12 +42,12 @@
         </div>
     </div>
 
-    <script src="http://127.0.0.1:8080/socket.io/socket.io.js"></script>
+    <script src="http://localhost:8888/socket.io/socket.io.js"></script>
 
     <script>
         (function() {
             try {
-                var socket = io.connect('http://127.0.0.2:8080');
+                var socket = io.connect('http://localhost:8888');
             } catch (err) {
                 console.log(err);
             }
